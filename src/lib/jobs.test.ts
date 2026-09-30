@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { sortByNewest, formatPostedDate, filterJobsByTitle } from './jobs';
+import { sortByNewest, formatPostedDate, filterJobsByTitle, summarizeJobs } from './jobs';
 import type { Job } from '../types/job';
 
 function makeJob(slug: string, postedDate: string): Job {
@@ -14,6 +14,21 @@ function makeJob(slug: string, postedDate: string): Job {
         summary: 'A role.',
     };
 }
+
+describe('summarizeJobs', () => {
+    it('counts open roles and distinct hiring departments', () => {
+        const jobs = [
+            makeJob('a', '2027-01-01'),
+            makeJob('b', '2027-02-01'),
+            { ...makeJob('c', '2027-03-01'), department: 'Clinical' },
+        ];
+        expect(summarizeJobs(jobs)).toEqual({ openRoles: 3, hiringDepartments: 2 });
+    });
+
+    it('returns zero counts when there are no open roles', () => {
+        expect(summarizeJobs([])).toEqual({ openRoles: 0, hiringDepartments: 0 });
+    });
+});
 
 describe('sortByNewest', () => {
     it('orders jobs by posted date, newest first', () => {

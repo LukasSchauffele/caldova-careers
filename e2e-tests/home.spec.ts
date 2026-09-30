@@ -18,6 +18,15 @@ test.describe('Open roles listing', () => {
         await expect(page.getByTestId('role-card')).toHaveCount(expectedRoleCount);
     });
 
+    test('shows open roles and distinct departments in the summary', async ({ page }) => {
+        await page.goto('/');
+        const departments = await page.getByTestId('role-department').allTextContents();
+
+        await expect(page.getByTestId('careers-summary')).toBeVisible();
+        await expect(page.getByTestId('open-roles-count')).toHaveText(String(expectedRoleCount));
+        await expect(page.getByTestId('hiring-departments-count')).toHaveText(String(new Set(departments).size));
+    });
+
     test('links through to a role detail page', async ({ page }) => {
         await page.goto('/');
         const firstCard = page.getByTestId('role-card').first();
