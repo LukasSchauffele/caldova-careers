@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { sortByNewest, formatPostedDate } from './jobs';
+import { sortByNewest, formatPostedDate, filterJobsByTitle } from './jobs';
 import type { Job } from '../types/job';
 
 function makeJob(slug: string, postedDate: string): Job {
@@ -40,5 +40,46 @@ describe('formatPostedDate', () => {
 
     it('returns the raw value when the date is unparseable', () => {
         expect(formatPostedDate('not-a-date')).toBe('not-a-date');
+    });
+});
+
+describe('filterJobsByTitle', () => {
+    it('matches title substrings case-insensitively and preserves order', () => {
+        const jobs = [makeJob('first', '2027-01-01'), makeJob('second', '2027-01-02'), makeJob('third', '2027-01-03')];
+        jobs[0].title = 'Clinical Research Scientist';
+        jobs[1].title = 'Senior Frontend Engineer';
+        jobs[2].title = 'Research Operations Lead';
+
+        expect(filterJobsByTitle(jobs, 'RESEARCH').map((job) => job.slug)).toEqual(['first', 'third']);
+    });
+
+    it('returns a new copy of all jobs for an empty query', () => {
+        const jobs = [makeJob('first', '2027-01-01'), makeJob('second', '2027-01-02')];
+
+        const result = filterJobsByTitle(jobs, '');
+
+        expect(result).toEqual(jobs);
+        expect(result).not.toBe(jobs);
+    });
+
+    it('returns all jobs for a whitespace-only query', () => {
+        const jobs = [makeJob('first', '2027-01-01'), makeJob('second', '2027-01-02')];
+
+        expect(filterJobsByTitle(jobs, '   ').map((job) => job.slug)).toEqual(['first', 'second']);
+    });
+
+    it('returns an empty array when no titles match', () => {
+        const jobs = [makeJob('first', '2027-01-01'), makeJob('second', '2027-01-02')];
+
+        expect(filterJobsByTitle(jobs, 'unmatched')).toEqual([]);
+    });
+
+    it('does not mutate the input array', () => {
+        const jobs = [makeJob('first', '2027-01-01'), makeJob('second', '2027-01-02')];
+        const originalJobs = [...jobs];
+
+        filterJobsByTitle(jobs, 'first');
+
+        expect(jobs).toEqual(originalJobs);
     });
 });

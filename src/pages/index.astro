@@ -24,7 +24,35 @@ const jobs: Job[] = sortByNewest(
       </p>
     </section>
 
-    <h2 class="text-2xl font-medium mb-6 text-slate-100">Open roles</h2>
+    <h2 class="text-2xl font-medium mb-4 text-slate-100">Open roles</h2>
+
+    <div class="max-w-xl mb-6">
+      <label for="role-search" class="block text-sm font-medium text-slate-200 mb-2">
+        Search roles by title
+      </label>
+      <input
+        id="role-search"
+        type="search"
+        placeholder="Search by role title"
+        class="w-full rounded-lg border border-slate-600 bg-slate-800/80 px-4 py-3 text-slate-100 placeholder:text-slate-400 shadow-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/40"
+        data-testid="role-search"
+      />
+      <p
+        class="mt-2 text-sm text-slate-400"
+        aria-live="polite"
+        aria-atomic="true"
+        data-testid="role-search-status"
+      >
+        Showing all {jobs.length} open roles.
+      </p>
+      <p
+        class="mt-4 rounded-lg border border-slate-700 bg-slate-800/60 px-4 py-3 text-slate-200"
+        data-testid="role-search-empty"
+        hidden
+      >
+        No roles match your search. Try a different title.
+      </p>
+    </div>
 
     {jobs.length === 0 ? (
       <EmptyState text="There are no open roles right now. Check back soon." />
@@ -38,3 +66,39 @@ const jobs: Job[] = sortByNewest(
     )}
   </div>
 </Layout>
+
+<script>
+  import { filterJobsByTitle } from '../lib/jobs';
+
+  const searchInput = document.querySelector<HTMLInputElement>('[data-testid="role-search"]');
+  const searchStatus = document.querySelector<HTMLElement>('[data-testid="role-search-status"]');
+  const searchEmpty = document.querySelector<HTMLElement>('[data-testid="role-search-empty"]');
+
+  if (searchInput && searchStatus && searchEmpty) {
+    const cards = Array.from(document.querySelectorAll<HTMLElement>('[data-testid="role-card"]'));
+    const records = cards.map((card) => ({
+      title: card.querySelector<HTMLElement>('[data-testid="role-title"]')?.textContent?.trim() ?? '',
+      card,
+    }));
+
+    searchInput.addEventListener('input', () => {
+      const query = searchInput.value.trim();
+      const matchingRecords = filterJobsByTitle(records, searchInput.value);
+      const matchingCards = new Set(matchingRecords);
+
+      records.forEach((record) => {
+        record.card.hidden = !matchingCards.has(record);
+      });
+
+      if (query && matchingRecords.length === 0) {
+        searchStatus.textContent = `No open roles match "${searchInput.value}".`;
+      } else if (query) {
+        searchStatus.textContent = `${matchingRecords.length} ${matchingRecords.length === 1 ? 'open role' : 'open roles'} found.`;
+      } else {
+        searchStatus.textContent = `Showing all ${records.length} open roles.`;
+      }
+
+      searchEmpty.hidden = !query || matchingRecords.length > 0;
+    });
+  }
+</script>

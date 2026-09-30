@@ -30,3 +30,16 @@ export function formatPostedDate(iso: string): string {
         timeZone: 'UTC',
     });
 }
+
+/** Filter items by a case-insensitive title substring without mutating input. */
+export function filterJobsByTitle<T extends { title: string }>(
+    items: readonly T[],
+    query: string,
+): T[] {
+    const normalizedQuery = query.trim().toLowerCase();
+    if (!normalizedQuery) {
+        return [...items];
+    }
+
+    return items.filter((item) => item.title.toLowerCase().includes(normalizedQuery));
+}
