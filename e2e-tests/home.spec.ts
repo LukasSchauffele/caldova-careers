@@ -27,6 +27,32 @@ test.describe('Open roles listing', () => {
         await expect(page.getByTestId('apply-form')).toBeVisible();
     });
 
+    test('searches, clears, and handles unmatched roles', async ({ page }) => {
+        await page.goto('/');
+
+        const visibleCards = page.locator('[data-testid="role-card"]:visible');
+        const firstTitle = (await visibleCards.first().getByTestId('role-title').textContent())!.trim();
+        const titleFragment = firstTitle;
+        const search = page.getByTestId('role-search');
+
+        await test.step('filters roles by a matching title fragment', async () => {
+            await search.fill(titleFragment);
+            await expect(visibleCards).toHaveCount(1);
+            await expect(visibleCards.first().getByTestId('role-title')).toHaveText(firstTitle);
+        });
+
+        await test.step('clears the search and restores every role', async () => {
+            await search.fill('');
+            await expect(visibleCards).toHaveCount(expectedRoleCount);
+        });
+
+        await test.step('shows an empty state for an unmatched title', async () => {
+            await search.fill('role-title-that-does-not-exist');
+            await expect(page.getByTestId('role-search-empty')).toBeVisible();
+            await expect(visibleCards).toHaveCount(0);
+        });
+    });
+
     test('has no automatically detectable accessibility violations', async ({ page }) => {
         await page.goto('/');
         const results = await new AxeBuilder({ page })
